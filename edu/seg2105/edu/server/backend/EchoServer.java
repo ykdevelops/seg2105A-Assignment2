@@ -1,137 +1,115 @@
 package edu.seg2105.edu.server.backend;
 
-// This file contains material supporting section 3.7 of the textbook:
-// "Object Oriented Software Engineering" and is issued under the open-source
-// license found at www.lloseng.com 
-
 import ocsf.server.*;
+import java.io.IOException;
 
 /**
- * This class overrides some of the methods in the abstract 
- * superclass in order to give more functionality to the server.
+ * This class provides additional functionality to the server.
  */
-public class EchoServer extends AbstractServer 
-{
-  //Class variables *************************************************
-  
-  /**
-   * The default port to listen on.
-   */
+public class EchoServer extends AbstractServer {
   final public static int DEFAULT_PORT = 5555;
-  
-  //Constructors ****************************************************
-  
-  /**
-   * Constructs an instance of the echo server.
-   *
-   * @param port The port number to connect on.
-   */
-  public EchoServer(int port) 
-  {
+  private int customPort; // Custom port variable to manage port changes
+
+  public EchoServer(int port) {
     super(port);
+    this.customPort = port; // Store the custom port locally
   }
 
-  //Instance methods ************************************************
-  
-  /**
-   * This method handles any messages received from the client.
-   *
-   * @param msg The message received from the client.
-   * @param client The connection from which the message originated.
-   */
-  public void handleMessageFromClient(Object msg, ConnectionToClient client)
-  {
+  public void quit() {
+    try {
+      close();
+      System.out.println("Server closed.");
+    } catch (IOException e) {
+      System.out.println("Error closing server.");
+    }
+    System.exit(0);
+  }
+
+  public void stopListeningForClients() {
+    stopListening();
+    System.out.println("Server stopped listening for new clients.");
+  }
+
+  public void closeServer() {
+    try {
+      close();
+      System.out.println("Server closed and all clients disconnected.");
+    } catch (IOException e) {
+      System.out.println("Error closing the server.");
+    }
+  }
+
+  public void setCustomPort(int port) { // Renamed to avoid conflict
+    if (!isListening() && getNumberOfClients() == 0) {
+      this.customPort = port; // Update custom port variable
+      System.out.println("Port set to " + port);
+    } else {
+      System.out.println("Cannot change port while server is open or clients are connected.");
+    }
+  }
+
+  public void startServer() {
+    if (!isListening()) {
+      try {
+        listen();
+        System.out.println("Server started listening for clients.");
+      } catch (IOException e) {
+        System.out.println("Error starting server: " + e.getMessage());
+      }
+    } else {
+      System.out.println("Server is already listening.");
+    }
+  }
+
+  public void displayCurrentPort() {
+    System.out.println("Current port: " + this.customPort); // Use custom port variable
+  }
+
+  public void handleMessageFromClient(Object msg, ConnectionToClient client) {
     System.out.println("Message received: " + msg + " from " + client);
     this.sendToAllClients(msg);
   }
 
-  /**
-   * This method handles any messages received from the server console.
-   * The message is prefixed with "SERVER MSG>" and sent to all clients.
-   *
-   * @param message The message from the server console.
-   */
   public void handleMessageFromServerConsole(String message) {
-	    // Add the prefix here
-	    String serverMessage = "SERVER MSG> " + message;
-	    System.out.println(serverMessage); // Display on server console
-	    sendToAllClients(serverMessage); // Broadcast to all clients
-	}
+    String serverMessage = "SERVER MSG> " + message;
+    System.out.println(serverMessage);
+    sendToAllClients(serverMessage);
+  }
 
-    
-  /**
-   * This method overrides the one in the superclass. Called
-   * when the server starts listening for connections.
-   */
-  protected void serverStarted()
-  {
+  protected void serverStarted() {
     System.out.println("Server listening for connections on port " + getPort());
   }
-  
-  /**
-   * This method overrides the one in the superclass. Called
-   * when the server stops listening for connections.
-   */
-  protected void serverStopped()
-  {
+
+  protected void serverStopped() {
     System.out.println("Server has stopped listening for connections.");
   }
 
-  /**
-   * This method is called each time a new client connects to the server.
-   * It overrides the one in the AbstractServer superclass.
-   */
-  @Override
   protected void clientConnected(ConnectionToClient client) {
     System.out.println("A new client has connected: " + client);
   }
 
-  /**
-   * This method is called each time a client disconnects from the server.
-   * It overrides the one in the AbstractServer superclass.
-   */
-  @Override
   synchronized protected void clientDisconnected(ConnectionToClient client) {
     System.out.println("A client has disconnected: " + client);
   }
-  
-  //Class methods ***************************************************
-  
-  /**
-   * This method is responsible for the creation of 
-   * the server instance (there is no UI in this phase).
-   *
-   * @param args[0] The port number to listen on. Defaults to 5555 
-   *          if no argument is entered.
-   */
-  public static void main(String[] args) 
-  {
-    int port = 0; //Port to listen on
 
-    try
-    {
-      port = Integer.parseInt(args[0]); //Get port from command line
+  public static void main(String[] args) {
+    int port = DEFAULT_PORT;
+    try {
+      port = Integer.parseInt(args[0]);
+    } catch(Throwable t) {
+      port = DEFAULT_PORT;
     }
-    catch(Throwable t)
-    {
-      port = DEFAULT_PORT; //Set port to 5555
-    }
-	
+
     EchoServer sv = new EchoServer(port);
-    
-    // Create and start a ServerConsole to handle server-side user input
     ServerConsole serverConsole = new ServerConsole(sv);
-    new Thread(serverConsole).start(); // Start ServerConsole in a new thread
-    
-    try 
-    {
-      sv.listen(); //Start listening for connections
-    } 
-    catch (Exception ex) 
-    {
+    new Thread(serverConsole).start();
+
+    try {
+      sv.listen();
+      sv.serverStarted();
+    } catch (Exception ex) {
       System.out.println("ERROR - Could not listen for clients!");
     }
   }
 }
-//End of EchoServer class
-
+// End of EchoServer class
