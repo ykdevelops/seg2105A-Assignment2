@@ -44,6 +44,20 @@ public class EchoServer extends AbstractServer
     System.out.println("Message received: " + msg + " from " + client);
     this.sendToAllClients(msg);
   }
+
+  /**
+   * This method handles any messages received from the server console.
+   * The message is prefixed with "SERVER MSG>" and sent to all clients.
+   *
+   * @param message The message from the server console.
+   */
+  public void handleMessageFromServerConsole(String message) {
+	    // Add the prefix here
+	    String serverMessage = "SERVER MSG> " + message;
+	    System.out.println(serverMessage); // Display on server console
+	    sendToAllClients(serverMessage); // Broadcast to all clients
+	}
+
     
   /**
    * This method overrides the one in the superclass. Called
@@ -105,6 +119,10 @@ public class EchoServer extends AbstractServer
 	
     EchoServer sv = new EchoServer(port);
     
+    // Create and start a ServerConsole to handle server-side user input
+    ServerConsole serverConsole = new ServerConsole(sv);
+    new Thread(serverConsole).start(); // Start ServerConsole in a new thread
+    
     try 
     {
       sv.listen(); //Start listening for connections
@@ -116,3 +134,4 @@ public class EchoServer extends AbstractServer
   }
 }
 //End of EchoServer class
+
