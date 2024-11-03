@@ -1,4 +1,5 @@
 package edu.seg2105.client.ui;
+
 // This file contains material supporting section 3.7 of the textbook:
 // "Object Oriented Software Engineering" and is issued under the open-source
 // license found at www.lloseng.com 
@@ -20,14 +21,14 @@ import edu.seg2105.client.common.*;
  */
 public class ClientConsole implements ChatIF 
 {
-  //Class variables *************************************************
+  // Class variables *************************************************
   
   /**
    * The default port to connect on.
    */
   final public static int DEFAULT_PORT = 5555;
   
-  //Instance variables **********************************************
+  // Instance variables **********************************************
   
   /**
    * The instance of the client that created this ConsoleChat.
@@ -40,7 +41,7 @@ public class ClientConsole implements ChatIF
   Scanner fromConsole; 
 
   
-  //Constructors ****************************************************
+  // Constructors ****************************************************
 
   /**
    * Constructs an instance of the ClientConsole UI.
@@ -57,6 +58,7 @@ public class ClientConsole implements ChatIF
     catch(IOException exception) 
     {
       System.out.println("Error: Can't set up connection! Terminating client.");
+      exception.printStackTrace(); // Show detailed error
       System.exit(1);
     }
     
@@ -65,7 +67,7 @@ public class ClientConsole implements ChatIF
   }
 
   
-  //Instance methods ************************************************
+  // Instance methods ************************************************
   
   /**
    * This method waits for input from the console. Once it is 
@@ -85,6 +87,7 @@ public class ClientConsole implements ChatIF
     catch (Exception ex) 
     {
       System.out.println("Unexpected error while reading from console!");
+      ex.printStackTrace(); // Show detailed error
     }
   }
 
@@ -100,7 +103,7 @@ public class ClientConsole implements ChatIF
   }
 
   
-  //Class methods ***************************************************
+  // Class methods ***************************************************
   
   /**
    * This method is responsible for the creation of the Client UI.
@@ -109,24 +112,26 @@ public class ClientConsole implements ChatIF
    * @param args[1] (Optional) The port number to connect on.
    */
   public static void main(String[] args) {
-	    String host = "";
-	    int port = DEFAULT_PORT; // Default port value
+    String host = "localhost"; // Default host value
+    int port = DEFAULT_PORT; // Default port value
 
-	    try {
-	        host = args[0]; // Get the host from command line
-	        if (args.length > 1) {
-	            port = Integer.parseInt(args[1]); // Get the port from command line if available
-	        }
-	    } catch (ArrayIndexOutOfBoundsException e) {
-	        host = "localhost"; // Default to localhost if host not specified
-	    } catch (NumberFormatException e) {
-	        System.out.println("Invalid port number. Using default port " + DEFAULT_PORT + ".");
-	    }
+    try {
+      // Check if the host is provided
+      if (args.length > 0) {
+        host = args[0];
+      }
+      // Check if the port is provided and parse it
+      if (args.length > 1) {
+        port = Integer.parseInt(args[1]);
+      }
+    } catch (ArrayIndexOutOfBoundsException e) {
+      System.out.println("No host specified. Defaulting to localhost.");
+    } catch (NumberFormatException e) {
+      System.out.println("Invalid port number. Using default port " + DEFAULT_PORT + ".");
+    }
 
-	    ClientConsole chat = new ClientConsole(host, port);
-	    chat.accept(); // Wait for console data
-	}
-
+    ClientConsole chat = new ClientConsole(host, port);
+    chat.accept(); // Wait for console data
+  }
 }
 // End of ClientConsole class
-

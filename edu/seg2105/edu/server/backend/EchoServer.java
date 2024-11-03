@@ -1,19 +1,14 @@
 package edu.seg2105.edu.server.backend;
+
 // This file contains material supporting section 3.7 of the textbook:
 // "Object Oriented Software Engineering" and is issued under the open-source
 // license found at www.lloseng.com 
-
 
 import ocsf.server.*;
 
 /**
  * This class overrides some of the methods in the abstract 
  * superclass in order to give more functionality to the server.
- *
- * @author Dr Timothy C. Lethbridge
- * @author Dr Robert Lagani&egrave;re
- * @author Fran&ccedil;ois B&eacute;langer
- * @author Paul Holden
  */
 public class EchoServer extends AbstractServer 
 {
@@ -36,7 +31,6 @@ public class EchoServer extends AbstractServer
     super(port);
   }
 
-  
   //Instance methods ************************************************
   
   /**
@@ -45,33 +39,47 @@ public class EchoServer extends AbstractServer
    * @param msg The message received from the client.
    * @param client The connection from which the message originated.
    */
-  public void handleMessageFromClient
-    (Object msg, ConnectionToClient client)
+  public void handleMessageFromClient(Object msg, ConnectionToClient client)
   {
     System.out.println("Message received: " + msg + " from " + client);
     this.sendToAllClients(msg);
   }
     
   /**
-   * This method overrides the one in the superclass.  Called
+   * This method overrides the one in the superclass. Called
    * when the server starts listening for connections.
    */
   protected void serverStarted()
   {
-    System.out.println
-      ("Server listening for connections on port " + getPort());
+    System.out.println("Server listening for connections on port " + getPort());
   }
   
   /**
-   * This method overrides the one in the superclass.  Called
+   * This method overrides the one in the superclass. Called
    * when the server stops listening for connections.
    */
   protected void serverStopped()
   {
-    System.out.println
-      ("Server has stopped listening for connections.");
+    System.out.println("Server has stopped listening for connections.");
   }
-  
+
+  /**
+   * This method is called each time a new client connects to the server.
+   * It overrides the one in the AbstractServer superclass.
+   */
+  @Override
+  protected void clientConnected(ConnectionToClient client) {
+    System.out.println("A new client has connected: " + client);
+  }
+
+  /**
+   * This method is called each time a client disconnects from the server.
+   * It overrides the one in the AbstractServer superclass.
+   */
+  @Override
+  synchronized protected void clientDisconnected(ConnectionToClient client) {
+    System.out.println("A client has disconnected: " + client);
+  }
   
   //Class methods ***************************************************
   
@@ -79,7 +87,7 @@ public class EchoServer extends AbstractServer
    * This method is responsible for the creation of 
    * the server instance (there is no UI in this phase).
    *
-   * @param args[0] The port number to listen on.  Defaults to 5555 
+   * @param args[0] The port number to listen on. Defaults to 5555 
    *          if no argument is entered.
    */
   public static void main(String[] args) 
