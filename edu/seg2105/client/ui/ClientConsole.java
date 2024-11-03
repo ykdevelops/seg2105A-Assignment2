@@ -108,30 +108,25 @@ public class ClientConsole implements ChatIF
    * @param args[0] The host to connect to.
    * @param args[1] (Optional) The port number to connect on.
    */
-  public static void main(String[] args) 
-  {
-    String host = "";
-    int port = DEFAULT_PORT; // Default port value
+  public static void main(String[] args) {
+	    String host = "";
+	    int port = DEFAULT_PORT; // Default port value
 
-    try 
-    {
-      host = args[0]; // Get the host from command line
-      if (args.length > 1) {
-        port = Integer.parseInt(args[1]); // Get the port from command line if available
-      }
-    } 
-    catch (ArrayIndexOutOfBoundsException e) 
-    {
-      host = "localhost"; // Default to localhost if host not specified
-    } 
-    catch (NumberFormatException e) 
-    {
-      System.out.println("Invalid port number. Using default port " + DEFAULT_PORT + ".");
-    }
+	    try {
+	        host = args[0]; // Get the host from command line
+	        if (args.length > 1) {
+	            port = Integer.parseInt(args[1]); // Get the port from command line if available
+	        }
+	    } catch (ArrayIndexOutOfBoundsException e) {
+	        host = "localhost"; // Default to localhost if host not specified
+	    } catch (NumberFormatException e) {
+	        System.out.println("Invalid port number. Using default port " + DEFAULT_PORT + ".");
+	    }
 
-    ClientConsole chat = new ClientConsole(host, port);
-    chat.accept(); // Wait for console data
-  }
+	    ClientConsole chat = new ClientConsole(host, port);
+	    chat.accept(); // Wait for console data
+	}
+
 }
 // End of ClientConsole class
 
