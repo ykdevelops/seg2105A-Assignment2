@@ -1,54 +1,17 @@
 package edu.seg2105.client.ui;
 
-// This file contains material supporting section 3.7 of the textbook:
-// "Object Oriented Software Engineering" and is issued under the open-source
-// license found at www.lloseng.com 
-
 import java.io.*;
 import java.util.Scanner;
-
 import edu.seg2105.client.backend.ChatClient;
 import edu.seg2105.client.common.*;
 
-/**
- * This class constructs the UI for a chat client. It implements the
- * chat interface in order to activate the display() method.
- * Warning: Some of the code here is cloned in ServerConsole 
- *
- * @author Fran&ccedil;ois B&eacute;langer
- * @autor Dr Timothy C. Lethbridge  
- * @autor Dr Robert Lagani&egrave;re
- */
 public class ClientConsole implements ChatIF 
 {
-  // Class variables *************************************************
-  
-  /**
-   * The default port to connect on.
-   */
   final public static int DEFAULT_PORT = 5555;
   
-  // Instance variables **********************************************
-  
-  /**
-   * The instance of the client that created this ConsoleChat.
-   */
   ChatClient client;
-  
-  /**
-   * Scanner to read from the console.
-   */
   Scanner fromConsole; 
 
-  
-  // Constructors ****************************************************
-
-  /**
-   * Constructs an instance of the ClientConsole UI.
-   *
-   * @param host The host to connect to.
-   * @param port The port to connect on.
-   */
   public ClientConsole(String host, int port) 
   {
     try 
@@ -58,21 +21,12 @@ public class ClientConsole implements ChatIF
     catch(IOException exception) 
     {
       System.out.println("Error: Can't set up connection! Terminating client.");
-      exception.printStackTrace(); // Show detailed error
       System.exit(1);
     }
     
-    // Create scanner object to read from console
     fromConsole = new Scanner(System.in); 
   }
 
-  
-  // Instance methods ************************************************
-  
-  /**
-   * This method waits for input from the console. Once it is 
-   * received, it sends it to the client's message handler.
-   */
   public void accept() 
   {
     try
@@ -81,57 +35,93 @@ public class ClientConsole implements ChatIF
       while (true) 
       {
         message = fromConsole.nextLine();
-        client.handleMessageFromClientUI(message);
+
+        // Check if the input is a command
+        if (message.startsWith("#")) 
+        {
+          handleCommand(message);
+        } 
+        else 
+        {
+          // Send message to server
+          client.handleMessageFromClientUI(message);
+        }
       }
     } 
     catch (Exception ex) 
     {
       System.out.println("Unexpected error while reading from console!");
-      ex.printStackTrace(); // Show detailed error
     }
   }
 
-  /**
-   * This method overrides the method in the ChatIF interface. It
-   * displays a message onto the screen.
-   *
-   * @param message The string to be displayed.
-   */
+  private void handleCommand(String message) 
+  {
+    switch (message) 
+    {
+      case "#quit":
+        client.quit();
+        break;
+        
+      case "#logoff":
+        client.logoff();
+        break;
+        
+      case "#login":
+        client.login();
+        break;
+        
+      case "#gethost":
+        System.out.println("Current host: " + client.getCurrentHost());
+        break;
+        
+      case "#getport":
+        System.out.println("Current port: " + client.getCurrentPort());
+        break;
+        
+      default:
+        if (message.startsWith("#sethost ")) {
+          String host = message.substring(9);
+          client.updateHost(host);
+        } 
+        else if (message.startsWith("#setport ")) {
+          try {
+            int port = Integer.parseInt(message.substring(9));
+            client.updatePort(port);
+          } catch (NumberFormatException e) {
+            System.out.println("Invalid port number.");
+          }
+        } 
+        else {
+          System.out.println("Unknown command.");
+        }
+    }
+  }
+
   public void display(String message) 
   {
     System.out.println("> " + message);
   }
 
-  
-  // Class methods ***************************************************
-  
-  /**
-   * This method is responsible for the creation of the Client UI.
-   *
-   * @param args[0] The host to connect to.
-   * @param args[1] (Optional) The port number to connect on.
-   */
-  public static void main(String[] args) {
-    String host = "localhost"; // Default host value
-    int port = DEFAULT_PORT; // Default port value
+  public static void main(String[] args) 
+  {
+    String host = "";
+    int port = DEFAULT_PORT;
 
-    try {
-      // Check if the host is provided
-      if (args.length > 0) {
-        host = args[0];
-      }
-      // Check if the port is provided and parse it
-      if (args.length > 1) {
+    try 
+    {
+      host = args[0];
+      if (args.length > 1) 
+      {
         port = Integer.parseInt(args[1]);
       }
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.out.println("No host specified. Defaulting to localhost.");
-    } catch (NumberFormatException e) {
-      System.out.println("Invalid port number. Using default port " + DEFAULT_PORT + ".");
+    } 
+    catch (Exception e) 
+    {
+      host = "localhost";
     }
 
     ClientConsole chat = new ClientConsole(host, port);
-    chat.accept(); // Wait for console data
+    chat.accept();
   }
 }
-// End of ClientConsole class
+
