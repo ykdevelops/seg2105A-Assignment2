@@ -5,33 +5,47 @@ import java.io.*;
 import edu.seg2105.client.common.*;
 
 /**
- * This class overrides some of the methods defined in the abstract
- * superclass in order to give more functionality to the client.
+ * This class provides additional functionality to the client.
+ * It now includes a login id that is sent with each message.
  *
  * @autor Dr Timothy C. Lethbridge
  * @autor Dr Robert Lagani&egrave;
  * @autor Fran&ccedil;ois B&eacute;langer
  */
 public class ChatClient extends AbstractClient {
-  
+
   // Instance variables **********************************************
-  
-  ChatIF clientUI;
+
+  private ChatIF clientUI;
   private boolean isClosing = false;
   private boolean isLoggingOff = false; // Flag for logoff
+  private String loginId; // New field for login ID
 
   // Constructors ****************************************************
-  
-  public ChatClient(String host, int port, ChatIF clientUI) 
+
+  /**
+   * Constructs an instance of the chat client.
+   *
+   * @param loginId The login ID of the client.
+   * @param host The server host.
+   * @param port The server port.
+   * @param clientUI The client interface.
+   * @throws IOException If an I/O error occurs.
+   */
+  public ChatClient(String loginId, String host, int port, ChatIF clientUI) 
     throws IOException {
     super(host, port);
     this.clientUI = clientUI;
+    this.loginId = loginId;
     openConnection();
-    System.out.println("DEBUG: Client successfully connected to server on port " + port);
+    clientUI.display("Connected to server as " + loginId);
   }
 
   // Command Methods *************************************************
-  
+
+  /**
+   * Gracefully quits the client by closing the connection.
+   */
   public void quit() {
     try {
       closeConnection();
@@ -41,6 +55,9 @@ public class ChatClient extends AbstractClient {
     System.exit(0);
   }
 
+  /**
+   * Logs off from the server.
+   */
   public void logoff() {
     try {
       isLoggingOff = true; // Set flag before disconnecting
@@ -53,6 +70,11 @@ public class ChatClient extends AbstractClient {
     }
   }
 
+  /**
+   * Updates the host, if not connected.
+   * 
+   * @param host The new host.
+   */
   public void updateHost(String host) {
     if (!isConnected()) {
       super.setHost(host);
@@ -62,6 +84,11 @@ public class ChatClient extends AbstractClient {
     }
   }
 
+  /**
+   * Updates the port, if not connected.
+   * 
+   * @param port The new port.
+   */
   public void updatePort(int port) {
     if (!isConnected()) {
       super.setPort(port);
@@ -71,6 +98,9 @@ public class ChatClient extends AbstractClient {
     }
   }
 
+  /**
+   * Logs back into the server if disconnected.
+   */
   public void login() {
     if (!isConnected()) {
       try {
@@ -84,23 +114,39 @@ public class ChatClient extends AbstractClient {
     }
   }
 
+  /**
+   * Returns the current host.
+   */
   public String getCurrentHost() {
     return super.getHost();
   }
 
+  /**
+   * Returns the current port.
+   */
   public int getCurrentPort() {
     return super.getPort();
   }
 
   // Instance methods ************************************************
-  
+
+  /**
+   * Handles a message from the server.
+   * 
+   * @param msg The message from the server.
+   */
   public void handleMessageFromServer(Object msg) {
     clientUI.display(msg.toString());
   }
 
+  /**
+   * Handles a message from the client UI.
+   * 
+   * @param message The message to send to the server.
+   */
   public void handleMessageFromClientUI(String message) {
     try {
-      sendToServer(message);
+      sendToServer(loginId + ": " + message); // Prepend loginId to each message
     } catch(IOException e) {
       clientUI.display("Could not send message to server. Terminating client.");
       closeClient();
@@ -126,6 +172,9 @@ public class ChatClient extends AbstractClient {
     }
   }
 
+  /**
+   * Closes the client connection and exits.
+   */
   private void closeClient() {
     try {
       closeConnection();
@@ -135,3 +184,4 @@ public class ChatClient extends AbstractClient {
     System.exit(0);
   }
 }
+

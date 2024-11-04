@@ -66,9 +66,19 @@ public class EchoServer extends AbstractServer {
   }
 
   public void handleMessageFromClient(Object msg, ConnectionToClient client) {
-    System.out.println("Message received: " + msg + " from " + client);
-    this.sendToAllClients(msg);
-  }
+	  String message = msg.toString();
+	  if (message.startsWith("#login ")) {
+	    String loginId = message.substring(7); // Extract login ID
+	    client.setInfo("loginId", loginId); // Store login ID in the client's info
+	    System.out.println(loginId + " has logged in.");
+	    this.sendToAllClients(loginId + " has joined the chat.");
+	  } else {
+	    String loginId = (String) client.getInfo("loginId");
+	    System.out.println(loginId + ": " + message);
+	    this.sendToAllClients(loginId + ": " + message);
+	  }
+	}
+
 
   public void handleMessageFromServerConsole(String message) {
     String serverMessage = "SERVER MSG> " + message;
@@ -92,24 +102,34 @@ public class EchoServer extends AbstractServer {
     System.out.println("A client has disconnected: " + client);
   }
 
-  public static void main(String[] args) {
-    int port = DEFAULT_PORT;
-    try {
-      port = Integer.parseInt(args[0]);
-    } catch(Throwable t) {
-      port = DEFAULT_PORT;
-    }
+  public static void main(String[] args) 
+  {
+      int port = 0; // Port to listen on
 
-    EchoServer sv = new EchoServer(port);
-    ServerConsole serverConsole = new ServerConsole(sv);
-    new Thread(serverConsole).start();
+      try 
+      {
+          port = Integer.parseInt(args[0]); // Get port from command line
+      } 
+      catch (Throwable t) 
+      {
+          port = DEFAULT_PORT; // Set port to default if no argument is passed
+      }
 
-    try {
-      sv.listen();
-      sv.serverStarted();
-    } catch (Exception ex) {
-      System.out.println("ERROR - Could not listen for clients!");
-    }
+      EchoServer sv = new EchoServer(port);
+
+      // Create and start a ServerConsole to handle server-side user input
+      ServerConsole serverConsole = new ServerConsole(sv);
+      new Thread(serverConsole).start(); // Start ServerConsole in a new thread
+
+      try 
+      {
+          sv.listen(); // Start listening for connections
+      } 
+      catch (Exception ex) 
+      {
+          System.out.println("ERROR - Could not listen for clients!");
+      }
   }
+
 }
 // End of EchoServer class
