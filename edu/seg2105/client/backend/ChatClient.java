@@ -38,7 +38,20 @@ public class ChatClient extends AbstractClient {
     this.clientUI = clientUI;
     this.loginId = loginId;
     openConnection();
+    sendLoginMessage(); // Send #login <loginId> message after connection
     clientUI.display("Connected to server as " + loginId);
+  }
+
+  /**
+   * Sends the #login <loginId> message to the server after connection.
+   */
+  private void sendLoginMessage() {
+    try {
+      sendToServer("#login " + loginId); // Send login message to server
+    } catch (IOException e) {
+      clientUI.display("Error: Unable to send login message to the server.");
+      quit(); // Quit if unable to send login message
+    }
   }
 
   // Command Methods *************************************************
@@ -105,6 +118,7 @@ public class ChatClient extends AbstractClient {
     if (!isConnected()) {
       try {
         openConnection();
+        sendLoginMessage(); // Send login message after reconnecting
         clientUI.display("Connected to server.");
       } catch(IOException e) {
         clientUI.display("Unable to connect to server.");
