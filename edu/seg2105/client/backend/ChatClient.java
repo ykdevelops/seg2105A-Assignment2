@@ -19,6 +19,7 @@ public class ChatClient extends AbstractClient {
   private ChatIF clientUI;
   private boolean isClosing = false;
   private boolean isLoggingOff = false; // Flag for logoff
+  private boolean isLoggedIn = false; // Flag to track if user is already logged in
   private String loginId; // New field for login ID
 
   // Constructors ****************************************************
@@ -40,6 +41,7 @@ public class ChatClient extends AbstractClient {
     openConnection();
     sendLoginMessage(); // Send #login <loginId> message after connection
     clientUI.display("Connected to server as " + loginId);
+    isLoggedIn = true; // Set logged-in status to true after successful login
   }
 
   /**
@@ -76,6 +78,7 @@ public class ChatClient extends AbstractClient {
       isLoggingOff = true; // Set flag before disconnecting
       closeConnection();
       clientUI.display("Logged off from server.");
+      isLoggedIn = false; // Reset logged-in status on logoff
     } catch(IOException e) {
       clientUI.display("Error logging off.");
     } finally {
@@ -98,6 +101,18 @@ public class ChatClient extends AbstractClient {
   }
 
   /**
+   * Returns the current host.
+   */
+  public String getCurrentHost() {
+    return super.getHost();
+  }
+  /**
+   * Returns the current login id.
+   */
+  public String getCurrentLoginId() {
+    return this.loginId;
+  }
+  /**
    * Updates the port, if not connected.
    * 
    * @param port The new port.
@@ -109,30 +124,6 @@ public class ChatClient extends AbstractClient {
     } else {
       clientUI.display("Cannot change port while connected.");
     }
-  }
-
-  /**
-   * Logs back into the server if disconnected.
-   */
-  public void login() {
-    if (!isConnected()) {
-      try {
-        openConnection();
-        sendLoginMessage(); // Send login message after reconnecting
-        clientUI.display("Connected to server.");
-      } catch(IOException e) {
-        clientUI.display("Unable to connect to server.");
-      }
-    } else {
-      clientUI.display("Already connected.");
-    }
-  }
-
-  /**
-   * Returns the current host.
-   */
-  public String getCurrentHost() {
-    return super.getHost();
   }
 
   /**
@@ -159,31 +150,43 @@ public class ChatClient extends AbstractClient {
    * @param message The message to send to the server.
    */
   public void handleMessageFromClientUI(String message) {
-    try {
-      sendToServer(loginId + ": " + message); // Prepend loginId to each message
-    } catch(IOException e) {
-      clientUI.display("Could not send message to server. Terminating client.");
-      closeClient();
-    }
-  }
+	    if (message.startsWith("#login")) {
+	        // Check if a login attempt is made after the user is already logged in
+	        if (isLoggedIn) {
+	            clientUI.display("Error - Second login detected");
+	            quit(); // Terminate the client connection after the second login attempt
+	            return; // Do not send the second login command to the server
+	        }
+	    }
+
+	    try {
+	        sendToServer(message); // Send the message without the loginId prefix
+	    } catch(IOException e) {
+	        clientUI.display("Could not send message to server. Terminating client.");
+	        closeClient();
+	    }
+	}
+
 
   @Override
   protected void connectionClosed() {
-    if (!isLoggingOff) { // Only display shutdown message if not logging off
-      clientUI.display("The server has shut down.");
-      closeClient();
-    }
-    isLoggingOff = false; // Reset logoff flag
+      if (!isLoggingOff && !isClosing) { // Only display shutdown message if not logging off or closing
+          clientUI.display("The server has shut down.");
+      }
+      isLoggingOff = false; // Reset logoff flag
+      isLoggedIn = false; // Reset login status after connection closed
   }
 
   @Override
   protected void connectionException(Exception exception) {
-    if (!isClosing) {
-      isClosing = true;
-      clientUI.display("Connection error: " + exception.getMessage());
-      clientUI.display("The server has shut down unexpectedly.");
-      closeClient();
-    }
+      if (!isClosing) {
+          isClosing = true;
+          clientUI.display("Connection error: " + exception.getMessage());
+          clientUI.display("The server has shut down unexpectedly.");
+          // Do not attempt to call closeConnection here, as it may already be in process
+          isClosing = false; // Reset closing flag
+      }
+      isLoggedIn = false; // Reset login status after connection exception
   }
 
   /**
@@ -198,4 +201,3 @@ public class ChatClient extends AbstractClient {
     System.exit(0);
   }
 }
-

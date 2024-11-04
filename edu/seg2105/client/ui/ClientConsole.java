@@ -64,43 +64,48 @@ public class ClientConsole implements ChatIF {
    * @param message The command input by the user.
    */
   private void handleCommand(String message) {
-    switch (message) {
-      case "#quit":
-        client.quit();
-        break;
-        
-      case "#logoff":
-        client.logoff();
-        break;
-        
-      case "#login":
-        client.login();
-        break;
-        
-      case "#gethost":
-        System.out.println("Current host: " + client.getCurrentHost());
-        break;
-        
-      case "#getport":
-        System.out.println("Current port: " + client.getCurrentPort());
-        break;
-        
-      default:
-        if (message.startsWith("#sethost ")) {
-          String host = message.substring(9);
-          client.updateHost(host);
-        } else if (message.startsWith("#setport ")) {
-          try {
-            int port = Integer.parseInt(message.substring(9));
-            client.updatePort(port);
-          } catch (NumberFormatException e) {
-            System.out.println("Invalid port number.");
-          }
-        } else {
-          System.out.println("Unknown command.");
-        }
-    }
-  }
+	    switch (message) {
+	      case "#quit":
+	        client.quit();
+	        break;
+	        
+	      case "#logoff":
+	        client.logoff();
+	        break;
+
+	      case "#login":
+	    	  System.out.println("Error: Already connected. Cannot log in again. You have been Logged out");
+	    	  // Send a message to the server indicating the user tried to log in while already logged in
+	    	  String noLoginMessage = client.getCurrentLoginId() + " attempted to log in while already logged in. " + client.getCurrentLoginId() + " has logged out.";
+	    	  client.handleMessageFromClientUI(noLoginMessage);
+	    	  client.quit();
+	    	  break;
+	        
+	      case "#gethost":
+	        System.out.println("Current host: " + client.getCurrentHost());
+	        break;
+	        
+	      case "#getport":
+	        System.out.println("Current port: " + client.getCurrentPort());
+	        break;
+	        
+	      default:
+	        if (message.startsWith("#sethost ")) {
+	          String host = message.substring(9);
+	          client.updateHost(host);
+	        } else if (message.startsWith("#setport ")) {
+	          try {
+	            int port = Integer.parseInt(message.substring(9));
+	            client.updatePort(port);
+	          } catch (NumberFormatException e) {
+	            System.out.println("Invalid port number.");
+	          }
+	        } else {
+	          System.out.println("Unknown command.");
+	        }
+	    }
+	}
+
 
   /**
    * Displays a message onto the console.
@@ -131,3 +136,4 @@ public class ClientConsole implements ChatIF {
     chat.accept();
   }
 }
+

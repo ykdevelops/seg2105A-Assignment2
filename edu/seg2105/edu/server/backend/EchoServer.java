@@ -3,33 +3,90 @@ package edu.seg2105.edu.server.backend;
 import ocsf.server.*;
 import java.io.IOException;
 
-/**
- * This class provides additional functionality to the server.
- */
 public class EchoServer extends AbstractServer {
   final public static int DEFAULT_PORT = 5555;
-  private int customPort; // Custom port variable to manage port changes
+  private int customPort; // to store custom port for displayCurrentPort
 
   public EchoServer(int port) {
     super(port);
-    this.customPort = port; // Store the custom port locally
+    this.customPort = port;
   }
 
-  public void quit() {
-    try {
-      close();
-      System.out.println("Server closed.");
-    } catch (IOException e) {
-      System.out.println("Error closing server.");
+  @Override
+  public void handleMessageFromClient(Object msg, ConnectionToClient client) {
+      String message = msg.toString();
+
+      // Check if the message is a login command (with or without extra text after "#login")
+      if (message.startsWith("#login ")) {
+          // Check if the client has already logged in
+          if (client.getInfo("loginId") == null) {
+              // First #login command: Extract loginId from the message
+              String loginId = message.substring(7).trim();
+              client.setInfo("loginId", loginId); // Save the loginId for future reference
+              System.out.println(loginId + " has logged in.");
+              this.sendToAllClients(loginId + " has joined the chat.");
+          } else {
+              // If #login is received after the initial login, disconnect the client
+              try {
+                  client.sendToClient("Error - Second login detected"); // Inform client of error
+                  String loginId = (String) client.getInfo("loginId");
+                  System.out.println(loginId + " attempted to log in while already logged in. " + loginId + " has logged out."); // Print the desired message
+                  client.close(); // Terminate the connection
+              } catch (IOException e) {
+                  System.out.println("Error closing connection with client.");
+              }
+          }
+      } else {
+          // Handle the message sent from the client indicating the attempted re-login
+          if (message.contains("attempted to log in while already logged in")) {
+              System.out.println(message); // Print the message received from the client
+          } else {
+              // For non-login messages, check if loginId has been set
+              String loginId = (String) client.getInfo("loginId");
+              if (loginId == null) {
+                  // If loginId is null, client hasn't logged in correctly, disconnect them
+                  try {
+                      client.sendToClient("ERROR: You must log in first with #login <loginId>.");
+                      client.close(); // Terminate the connection
+                      System.out.println("Client sent a message without logging in; connection terminated.");
+                  } catch (IOException e) {
+                      System.out.println("Error closing connection with client.");
+                  }
+              } else {
+                  // Broadcast the message prefixed with the loginId
+                  System.out.println("Message received from " + loginId + ": " + message);
+                  this.sendToAllClients(loginId + ": " + message);
+              }
+          }
+      }
+  }
+
+
+
+
+  @Override
+  protected void clientConnected(ConnectionToClient client) {
+    System.out.println("A new client has connected: " + client);
+  }
+
+  @Override
+  protected synchronized void clientDisconnected(ConnectionToClient client) {
+    String loginId = (String) client.getInfo("loginId");
+    if (loginId != null) {
+      System.out.println(loginId + " has disconnected.");
+      this.sendToAllClients(loginId + " has left the chat.");
+    } else {
+      System.out.println("An unidentified client has disconnected.");
     }
-    System.exit(0);
   }
 
+  // Method to stop listening for new clients
   public void stopListeningForClients() {
     stopListening();
     System.out.println("Server stopped listening for new clients.");
   }
 
+  // Method to close the server and disconnect all current clients
   public void closeServer() {
     try {
       close();
@@ -39,15 +96,18 @@ public class EchoServer extends AbstractServer {
     }
   }
 
-  public void setCustomPort(int port) { // Renamed to avoid conflict
+  // Method to set a custom port for the server
+  public void setCustomPort(int port) {
     if (!isListening() && getNumberOfClients() == 0) {
-      this.customPort = port; // Update custom port variable
+      this.customPort = port;
+      super.setPort(port);
       System.out.println("Port set to " + port);
     } else {
       System.out.println("Cannot change port while server is open or clients are connected.");
     }
   }
 
+  // Method to start the server if it is currently stopped
   public void startServer() {
     if (!isListening()) {
       try {
@@ -61,75 +121,44 @@ public class EchoServer extends AbstractServer {
     }
   }
 
+  // Method to display the current port of the server
   public void displayCurrentPort() {
-    System.out.println("Current port: " + this.customPort); // Use custom port variable
+    System.out.println("Current port: " + this.customPort);
   }
 
-  public void handleMessageFromClient(Object msg, ConnectionToClient client) {
-	  String message = msg.toString();
-	  if (message.startsWith("#login ")) {
-	    String loginId = message.substring(7); // Extract login ID
-	    client.setInfo("loginId", loginId); // Store login ID in the client's info
-	    System.out.println(loginId + " has logged in.");
-	    this.sendToAllClients(loginId + " has joined the chat.");
-	  } else {
-	    String loginId = (String) client.getInfo("loginId");
-	    System.out.println(loginId + ": " + message);
-	    this.sendToAllClients(loginId + ": " + message);
-	  }
-	}
-
-
+  // New method to handle messages from the server console
   public void handleMessageFromServerConsole(String message) {
-    String serverMessage = "SERVER MSG> " + message;
-    System.out.println(serverMessage);
-    sendToAllClients(serverMessage);
+    sendToAllClients("SERVER MSG> " + message);
+    System.out.println("SERVER MSG> " + message);
   }
 
-  protected void serverStarted() {
-    System.out.println("Server listening for connections on port " + getPort());
+  // Method to quit the server
+  public void quit() {
+    try {
+      close();
+      System.out.println("Server closed.");
+    } catch (IOException e) {
+      System.out.println("Error closing server.");
+    }
+    System.exit(0);
   }
 
-  protected void serverStopped() {
-    System.out.println("Server has stopped listening for connections.");
+  public static void main(String[] args) {
+    int port = DEFAULT_PORT;
+
+    try {
+      port = Integer.parseInt(args[0]);
+    } catch (Throwable t) {
+      System.out.println("No port specified. Using default port: " + DEFAULT_PORT);
+    }
+
+    EchoServer sv = new EchoServer(port);
+    
+    try {
+      sv.listen(); // Start listening for clients
+      System.out.println("Server listening for connections on port " + port);
+    } catch (Exception ex) {
+      System.out.println("ERROR - Could not listen for clients!");
+    }
   }
-
-  protected void clientConnected(ConnectionToClient client) {
-    System.out.println("A new client has connected: " + client);
-  }
-
-  synchronized protected void clientDisconnected(ConnectionToClient client) {
-    System.out.println("A client has disconnected: " + client);
-  }
-
-  public static void main(String[] args) 
-  {
-      int port = 0; // Port to listen on
-
-      try 
-      {
-          port = Integer.parseInt(args[0]); // Get port from command line
-      } 
-      catch (Throwable t) 
-      {
-          port = DEFAULT_PORT; // Set port to default if no argument is passed
-      }
-
-      EchoServer sv = new EchoServer(port);
-
-      // Create and start a ServerConsole to handle server-side user input
-      ServerConsole serverConsole = new ServerConsole(sv);
-      new Thread(serverConsole).start(); // Start ServerConsole in a new thread
-
-      try 
-      {
-          sv.listen(); // Start listening for connections
-      } 
-      catch (Exception ex) 
-      {
-          System.out.println("ERROR - Could not listen for clients!");
-      }
-  }
-
 }
-// End of EchoServer class
