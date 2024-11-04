@@ -6,6 +6,7 @@ import java.util.Scanner;
 /**
  * This class provides the console interface for a server.
  * It listens for server commands and forwards them to the EchoServer instance.
+ *  @author Youssef Khalil
  */
 public class ServerConsole implements ChatIF, Runnable {
 

@@ -3,7 +3,16 @@ package edu.seg2105.edu.server.backend;
 import ocsf.server.*;
 import java.io.IOException;
 import java.util.Scanner;
-
+/**
+ * This class overrides some of the methods in the abstract 
+ * superclass in order to give more functionality to the server.
+ *
+ * @author Dr Timothy C. Lethbridge
+ * @author Dr Robert Lagani&egrave;re
+ * @author Fran&ccedil;ois B&eacute;langer
+ * @author Paul Holden
+ * @author Youssef Khalil
+ */
 public class EchoServer extends AbstractServer {
     final public static int DEFAULT_PORT = 5555;
     private int customPort; // to store custom port for displayCurrentPort
@@ -173,10 +182,10 @@ public class EchoServer extends AbstractServer {
         }
         System.exit(0);
     }
-
     public static void main(String[] args) {
-        int port = DEFAULT_PORT;
+        int port = DEFAULT_PORT; // Default port if none specified
 
+        // Check if a port number is provided as a command-line argument
         try {
             port = Integer.parseInt(args[0]);
         } catch (Throwable t) {
@@ -185,22 +194,27 @@ public class EchoServer extends AbstractServer {
 
         EchoServer sv = new EchoServer(port);
 
+        // Try to start the server and listen for client connections
         try {
             sv.listen();
             System.out.println("Server listening for connections on port " + port);
         } catch (Exception ex) {
             System.out.println("ERROR - Could not listen for clients!");
+            return; // Exit if server fails to start
         }
 
+        // Scanner to handle console input for server commands
         Scanner scanner = new Scanner(System.in);
         while (true) {
             String command = scanner.nextLine();
             sv.handleMessageFromServerConsole(command);
 
+            // Break loop and stop the server if #quit is entered
             if (command.equals("#quit")) {
                 break;
             }
         }
-        scanner.close();
+        scanner.close(); // Close the scanner resource
     }
+
 }

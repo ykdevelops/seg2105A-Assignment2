@@ -6,8 +6,13 @@ import edu.seg2105.client.backend.ChatClient;
 import edu.seg2105.client.common.*;
 
 /**
- * This class provides the console interface for a client.
- * It takes in a mandatory login ID, an optional host, and an optional port.
+ * This class constructs the UI for a chat client.  It implements the
+ * chat interface in order to activate the display() method.
+
+ *  @author Dr Timothy C. Lethbridge
+ * @author Dr Robert Lagani&egrave;
+ * @author Fran&ccedil;ois B&eacute;langer
+ * @author Youssef Khalil
  */
 public class ClientConsole implements ChatIF {
   

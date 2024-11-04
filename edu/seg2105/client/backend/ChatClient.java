@@ -8,9 +8,10 @@ import edu.seg2105.client.common.*;
  * This class provides additional functionality to the client.
  * It now includes a login ID that is sent with each message.
  *
- * @autor Dr Timothy C. Lethbridge
- * @autor Dr Robert Lagani&egrave;
- * @autor Fran&ccedil;ois B&eacute;langer
+ * @author Dr Timothy C. Lethbridge
+ * @author Dr Robert Lagani&egrave;
+ * @author Fran&ccedil;ois B&eacute;langer
+ * @author Youssef Khalil
  */
 public class ChatClient extends AbstractClient {
 
