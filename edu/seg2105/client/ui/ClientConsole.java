@@ -59,7 +59,7 @@ public class ClientConsole implements ChatIF {
   }
 
   /**
-   * Handles commands that start with "#".
+   * Handles commands that start with "#"
    * 
    * @param message The command input by the user.
    */
@@ -71,15 +71,21 @@ public class ClientConsole implements ChatIF {
 	        
 	      case "#logoff":
 	        client.logoff();
+	        System.out.println("Connection closed.");  // Display on the client side
 	        break;
 
 	      case "#login":
-	    	  System.out.println("Error: Already connected. Cannot log in again. You have been Logged out");
-	    	  // Send a message to the server indicating the user tried to log in while already logged in
-	    	  String noLoginMessage = client.getCurrentLoginId() + " attempted to log in while already logged in. " + client.getCurrentLoginId() + " has logged out.";
-	    	  client.handleMessageFromClientUI(noLoginMessage);
-	    	  client.quit();
-	    	  break;
+	        if (client.isConnected()) {
+	          System.out.println("Error: Already connected. Cannot log in again. You have been logged out.");
+	          // Inform the server of the logout and quit the client
+	          String noLoginMessage = client.getCurrentLoginId() + " attempted to log in while already logged in. " 
+	                                  + client.getCurrentLoginId() + " has logged out.";
+	          client.handleMessageFromClientUI(noLoginMessage);
+	          client.quit();
+	        } else {
+	          System.out.println("Error: You must connect to the server first.");
+	        }
+	        break;
 	        
 	      case "#gethost":
 	        System.out.println("Current host: " + client.getCurrentHost());
@@ -123,14 +129,17 @@ public class ClientConsole implements ChatIF {
    *             followed optionally by the host and port.
    */
   public static void main(String[] args) {
-    if (args.length < 1) {
+    // Check if the first argument is a valid login ID (not a host)
+    if (args.length < 1 || args[0].equalsIgnoreCase("localhost")) {
       System.out.println("ERROR - No login ID specified. Connection aborted.");
-      System.exit(1);
+      System.exit(1); // Terminate the client
     }
-    
+
     String loginId = args[0];
     String host = args.length > 1 ? args[1] : "localhost";
     int port = args.length > 2 ? Integer.parseInt(args[2]) : DEFAULT_PORT;
+
+    System.out.println("Starting ClientConsole with loginId: " + loginId); // Debug statement
 
     ClientConsole chat = new ClientConsole(loginId, host, port);
     chat.accept();

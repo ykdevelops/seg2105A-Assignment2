@@ -6,7 +6,7 @@ import edu.seg2105.client.common.*;
 
 /**
  * This class provides additional functionality to the client.
- * It now includes a login id that is sent with each message.
+ * It now includes a login ID that is sent with each message.
  *
  * @autor Dr Timothy C. Lethbridge
  * @autor Dr Robert Lagani&egrave;
@@ -62,29 +62,36 @@ public class ChatClient extends AbstractClient {
    * Gracefully quits the client by closing the connection.
    */
   public void quit() {
-    try {
-      closeConnection();
-    } catch(IOException e) {
-      System.out.println("DEBUG: IOException while quitting.");
-    }
-    System.exit(0);
-  }
+	    try {
+	        sendToServer("#quit"); // Inform server before disconnecting
+	        closeConnection();
+	    } catch(IOException e) {
+	        System.out.println("DEBUG: IOException while quitting.");
+	    }
+	    System.exit(0);
+	}
 
   /**
    * Logs off from the server.
    */
+  /**
+   * Logs off from the server.
+   */
   public void logoff() {
-    try {
-      isLoggingOff = true; // Set flag before disconnecting
-      closeConnection();
-      clientUI.display("Logged off from server.");
-      isLoggedIn = false; // Reset logged-in status on logoff
-    } catch(IOException e) {
-      clientUI.display("Error logging off.");
-    } finally {
-      isLoggingOff = false; // Reset flag after disconnecting
-    }
+      try {
+          isLoggingOff = true; // Set the logoff flag
+          sendToServer("#logoff"); // Send logoff message to the server
+          clientUI.display("Logged off from server."); // Display message in client console
+          isLoggedIn = false;  // Reset the logged-in status
+          closeConnection();  // Close the connection gracefully
+      } catch (IOException e) {
+          clientUI.display("Error logging off.");
+      } finally {
+          isLoggingOff = false; // Reset the flag
+      }
   }
+
+
 
   /**
    * Updates the host, if not connected.
@@ -106,12 +113,14 @@ public class ChatClient extends AbstractClient {
   public String getCurrentHost() {
     return super.getHost();
   }
+
   /**
-   * Returns the current login id.
+   * Returns the current login ID.
    */
   public String getCurrentLoginId() {
     return this.loginId;
   }
+
   /**
    * Updates the port, if not connected.
    * 
@@ -150,23 +159,22 @@ public class ChatClient extends AbstractClient {
    * @param message The message to send to the server.
    */
   public void handleMessageFromClientUI(String message) {
-	    if (message.startsWith("#login")) {
-	        // Check if a login attempt is made after the user is already logged in
-	        if (isLoggedIn) {
-	            clientUI.display("Error - Second login detected");
-	            quit(); // Terminate the client connection after the second login attempt
-	            return; // Do not send the second login command to the server
-	        }
-	    }
+    if (message.startsWith("#login")) {
+        // Check if a login attempt is made after the user is already logged in
+        if (isLoggedIn) {
+            clientUI.display("Error - Second login detected. You will be logged out.");
+            quit(); // Terminate the client connection after the second login attempt
+            return; // Do not send the second login command to the server
+        }
+    }
 
-	    try {
-	        sendToServer(message); // Send the message without the loginId prefix
-	    } catch(IOException e) {
-	        clientUI.display("Could not send message to server. Terminating client.");
-	        closeClient();
-	    }
-	}
-
+    try {
+      sendToServer(message); // Send the message without the loginId prefix
+    } catch(IOException e) {
+      clientUI.display("Could not send message to server. Terminating client.");
+      closeClient();
+    }
+  }
 
   @Override
   protected void connectionClosed() {
@@ -175,18 +183,20 @@ public class ChatClient extends AbstractClient {
       }
       isLoggingOff = false; // Reset logoff flag
       isLoggedIn = false; // Reset login status after connection closed
+      System.exit(0); // Terminate the client program
   }
+
 
   @Override
   protected void connectionException(Exception exception) {
-      if (!isClosing) {
-          isClosing = true;
-          clientUI.display("Connection error: " + exception.getMessage());
-          clientUI.display("The server has shut down unexpectedly.");
-          // Do not attempt to call closeConnection here, as it may already be in process
-          isClosing = false; // Reset closing flag
-      }
-      isLoggedIn = false; // Reset login status after connection exception
+    if (!isClosing) {
+      isClosing = true;
+      clientUI.display("Connection error: " + exception.getMessage());
+      clientUI.display("The server has shut down unexpectedly.");
+      // Do not attempt to call closeConnection here, as it may already be in process
+      isClosing = false; // Reset closing flag
+    }
+    isLoggedIn = false; // Reset login status after connection exception
   }
 
   /**
@@ -201,3 +211,4 @@ public class ChatClient extends AbstractClient {
     System.exit(0);
   }
 }
+
